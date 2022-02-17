@@ -52,12 +52,13 @@ namespace JustBackup
             var ffxivcfg = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), 
                 "My Games", "FINAL FANTASY XIV - A Realm Reborn");
             var daysToKeep = TimeSpan.FromDays(config.DaysToKeep);
+            var backupAll = config.BackupAll;
             PluginLog.Information($"Backup path: {path}\nTemp folder: {temp}\nFfxiv config folder: {ffxivcfg}");
             new Thread(() =>
             {
                 try
                 {
-                    CloneDirectory(ffxivcfg, temp);
+                    CloneDirectory(ffxivcfg, temp, backupAll);
                     if (!Directory.Exists(path))
                     {
                         PluginLog.Information($"Creating {path}");
@@ -96,7 +97,7 @@ namespace JustBackup
             }).Start();
         }
 
-        void CloneDirectory(string root, string dest)
+        void CloneDirectory(string root, string dest, bool all)
         {
             foreach (var directory in Directory.GetDirectories(root))
             {
@@ -107,12 +108,12 @@ namespace JustBackup
                     PluginLog.Information($"Creating {path}");
                     Directory.CreateDirectory(path);
                 }
-                CloneDirectory(directory, path);
+                CloneDirectory(directory, path, all);
             }
 
             foreach (var file in Directory.GetFiles(root))
             {
-                if(file.EndsWith(".dat", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".cfg", StringComparison.OrdinalIgnoreCase))
+                if(all || file.EndsWith(".dat", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".cfg", StringComparison.OrdinalIgnoreCase))
                 {
                     PluginLog.Information($"Copying from {file} to {dest}");
                     CopyFile(file, dest);

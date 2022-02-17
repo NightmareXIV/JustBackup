@@ -13,5 +13,6 @@ namespace JustBackup
         public int Version { get; set; } = 1;
         public string BackupPath = "";
         public int DaysToKeep = 7;
+        public bool BackupAll = false;
     }
 }
