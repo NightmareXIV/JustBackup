@@ -1,0 +1,7 @@
+﻿{
+  "Author": "Eternita",
+  "Name": "JustBackup",
+  "InternalName": "JustBackup",
+  "Description": "Automatically backup your game and plugin configuration (upon game starting).",
+  "RepoUrl": "https://github.com/Eternita-S/JustBackup"
+}
