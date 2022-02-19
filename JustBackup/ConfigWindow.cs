@@ -1,4 +1,5 @@
-﻿using Dalamud.Interface.Internal.Notifications;
+﻿using Dalamud.Interface.Colors;
+using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
 using System;
@@ -38,6 +39,8 @@ namespace JustBackup
             ImGui.Text("  Note: backups will be deleted to recycle bin, if available.");
             ImGui.Checkbox("Include ALL files inside FFXIV's data folder into backup", ref p.config.BackupAll);
             ImGui.Text("  (otherwise only config files will be saved, screenshots, logs, etc will be skipped)");
+            ImGui.Checkbox("Use built-in zip method instead of 7-zip", ref p.config.UseDefaultZip);
+            if (p.config.UseDefaultZip) ImGui.TextColored(ImGuiColors.DalamudRed, "7-zip archives are taking up to 15 times less space!");
         }
 
         public override void OnClose()

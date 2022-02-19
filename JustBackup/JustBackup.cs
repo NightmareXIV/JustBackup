@@ -3,6 +3,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -64,13 +65,46 @@ namespace JustBackup
                         PluginLog.Information($"Creating {path}");
                         Directory.CreateDirectory(path);
                     }
-                    ZipFile.CreateFromDirectory(temp, Path.Combine(path,
-                        $"Backup-game-{DateTimeOffset.Now:yyyy-MM-dd HH-mm-ss-fffffff}.zip"), CompressionLevel.Optimal, false);
-                    Directory.Delete(temp, true);
+                    var outfile = Path.Combine(path, $"Backup-game-{DateTimeOffset.Now:yyyy-MM-dd HH-mm-ss-fffffff}");
+                    if (config.UseDefaultZip)
+                    {
+                        ZipFile.CreateFromDirectory(temp, outfile + ".zip", CompressionLevel.Optimal, false);
+                    }
+                    else
+                    {
+                        var szinfo = new ProcessStartInfo()
+                        {
+                            FileName = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName, "7zip", "7za.exe"),
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true
+                        };
+                        //a -m0=LZMA2 -mmt1 -mx9 -t7z "H:\te mp\test1.7z" "c:\vs\NotificationMaster"
+                        szinfo.ArgumentList.Add("a");
+                        szinfo.ArgumentList.Add("-m0=LZMA2");
+                        szinfo.ArgumentList.Add("-mmt1");
+                        szinfo.ArgumentList.Add("-mx9");
+                        szinfo.ArgumentList.Add("-t7z");
+                        szinfo.ArgumentList.Add(outfile + ".7z");
+                        szinfo.ArgumentList.Add(Path.Combine(temp, "*"));
+                        var szproc = new Process()
+                        {
+                            StartInfo = szinfo
+                        };
+                        szproc.OutputDataReceived += (sender, args) => PluginLog.Information("7-zip output: {0}", args.Data);
+                        szproc.Start();
+                        szproc.PriorityClass = ProcessPriorityClass.BelowNormal;
+                        szproc.BeginOutputReadLine();
+                        szproc.WaitForExit();
+                        if (szproc.ExitCode != 0)
+                        {
+                            throw new Exception("7-zip exited with error code=" + szproc.ExitCode);
+                        }
+                    }
                     PluginLog.Information("Backup complete.");
                     foreach (var file in Directory.GetFiles(path))
                     {
-                        if(DateTimeOffset.TryParseExact(Path.GetFileName(file).Replace("Backup-game-", "").Replace(".zip", ""), "yyyy-MM-dd HH-mm-ss-fffffff", CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AssumeLocal, out var time))
+                        if(DateTimeOffset.TryParseExact(Path.GetFileName(file).Replace("Backup-game-", "").Replace(".zip", "").Replace(".7z", ""), "yyyy-MM-dd HH-mm-ss-fffffff", CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AssumeLocal, out var time))
                         {
                             if(DateTimeOffset.Now.ToUnixTimeSeconds() > time.ToUnixTimeSeconds() + (long)daysToKeep.TotalSeconds)
                             {
@@ -92,6 +126,18 @@ namespace JustBackup
                     new TickScheduler(delegate
                     {
                         Svc.PluginInterface.UiBuilder.AddNotification("Error creating backup:\n" + ex.Message, this.Name, NotificationType.Error);
+                    }, Svc.Framework);
+                }
+                try
+                {
+                    Directory.Delete(temp, true);
+                }
+                catch (Exception ex)
+                {
+                    PluginLog.Error($"Error deleting temp files: {ex.Message}\n{ex.StackTrace ?? ""}");
+                    new TickScheduler(delegate
+                    {
+                        Svc.PluginInterface.UiBuilder.AddNotification("Error deleting temp files:\n" + ex.Message, this.Name, NotificationType.Error);
                     }, Svc.Framework);
                 }
             }).Start();
