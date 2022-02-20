@@ -74,7 +74,7 @@ namespace JustBackup
                     {
                         var szinfo = new ProcessStartInfo()
                         {
-                            FileName = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName, "7zip", "7za.exe"),
+                            FileName = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName, "7zr.exe"),
                             UseShellExecute = false,
                             CreateNoWindow = true,
                             RedirectStandardOutput = true

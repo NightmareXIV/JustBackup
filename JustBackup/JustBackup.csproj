@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
 		<Authors>Eternita</Authors>
-		<Version>1.0.0.1</Version>
+		<Version>1.0.0.2</Version>
 	</PropertyGroup>
 
 	<PropertyGroup>
@@ -56,16 +56,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <None Update="7zip\7za.dll">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="7zip\7za.exe">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="7zip\7zxa.dll">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	  <None Update="7zip\License.txt">
+	  <None Update="7zr.exe">
 	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
 	  </None>
 	</ItemGroup>
