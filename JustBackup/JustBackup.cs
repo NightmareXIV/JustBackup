@@ -1,4 +1,5 @@
-﻿using Dalamud.Interface.Internal.Notifications;
+﻿using Dalamud.Configuration;
+using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
 using Dalamud.Plugin;
@@ -7,6 +8,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
+using System.Reflection;
 using System.Threading;
 
 namespace JustBackup
@@ -52,20 +54,36 @@ namespace JustBackup
             var temp = Path.Combine(Path.GetTempPath(), $"JustBackup-{stamp}");
             var ffxivcfg = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), 
                 "My Games", "FINAL FANTASY XIV - A Realm Reborn");
+            DirectoryInfo pluginsConfigsDir = null;
+            if (config.BackupPluginConfigs)
+            {
+                try
+                {
+                    var c = Svc.PluginInterface.GetType().GetField("configs", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Svc.PluginInterface);
+                    pluginsConfigsDir = (DirectoryInfo)c.GetType().GetField("configDirectory", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(c);
+                }
+                catch(Exception e)
+                {
+                    PluginLog.Error($"Can't back up plugin configurations: {e.Message}\n{e.StackTrace ?? ""}");
+                    Svc.PluginInterface.UiBuilder.AddNotification("Error creating plugin configuration backup:\n" + e.Message, this.Name, NotificationType.Error);
+                }
+            }
             var daysToKeep = TimeSpan.FromDays(config.DaysToKeep);
             var backupAll = config.BackupAll;
-            PluginLog.Information($"Backup path: {path}\nTemp folder: {temp}\nFfxiv config folder: {ffxivcfg}");
+            PluginLog.Information($"Backup path: {path}\nTemp folder: {temp}\nFfxiv config folder: {ffxivcfg}\nPlugin config folder: {pluginsConfigsDir?.FullName}");
             new Thread(() =>
             {
                 try
                 {
-                    CloneDirectory(ffxivcfg, temp, backupAll);
+                    CloneDirectory(ffxivcfg, Path.Combine(temp, "game"), backupAll);
+                    if(pluginsConfigsDir != null) CloneDirectory(pluginsConfigsDir.FullName, Path.Combine(temp, "plugins"), true);
+
                     if (!Directory.Exists(path))
                     {
                         PluginLog.Information($"Creating {path}");
-                        Directory.CreateDirectory(path);
+                        var di = Directory.CreateDirectory(path);
                     }
-                    var outfile = Path.Combine(path, $"Backup-game-{DateTimeOffset.Now:yyyy-MM-dd HH-mm-ss-fffffff}");
+                    var outfile = Path.Combine(path, $"Backup-FFXIV-{DateTimeOffset.Now:yyyy-MM-dd HH-mm-ss-fffffff}");
                     if (config.UseDefaultZip)
                     {
                         ZipFile.CreateFromDirectory(temp, outfile + ".zip", CompressionLevel.Optimal, false);
@@ -104,7 +122,7 @@ namespace JustBackup
                     PluginLog.Information("Backup complete.");
                     foreach (var file in Directory.GetFiles(path))
                     {
-                        if(DateTimeOffset.TryParseExact(Path.GetFileName(file).Replace("Backup-game-", "").Replace(".zip", "").Replace(".7z", ""), "yyyy-MM-dd HH-mm-ss-fffffff", CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AssumeLocal, out var time))
+                        if(DateTimeOffset.TryParseExact(Path.GetFileName(file).Replace("Backup-FFXIV-", "").Replace(".zip", "").Replace(".7z", ""), "yyyy-MM-dd HH-mm-ss-fffffff", CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AssumeLocal, out var time))
                         {
                             if(DateTimeOffset.Now.ToUnixTimeSeconds() > time.ToUnixTimeSeconds() + (long)daysToKeep.TotalSeconds)
                             {
@@ -148,6 +166,7 @@ namespace JustBackup
             foreach (var directory in Directory.GetDirectories(root))
             {
                 string dirName = Path.GetFileName(directory);
+                //if (dirName.Equals("splatoon", StringComparison.OrdinalIgnoreCase)) continue; //don't need to backup backups
                 var path = Path.Combine(dest, dirName);
                 if (!Directory.Exists(path))
                 {
