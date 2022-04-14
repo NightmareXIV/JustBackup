@@ -4,6 +4,8 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using System;
+using System.Linq;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -70,18 +72,35 @@ namespace JustBackup
             }
             var daysToKeep = TimeSpan.FromDays(config.DaysToKeep);
             var backupAll = config.BackupAll;
+            var toKeep = config.BackupsToKeep;
             PluginLog.Information($"Backup path: {path}\nTemp folder: {temp}\nFfxiv config folder: {ffxivcfg}\nPlugin config folder: {pluginsConfigsDir?.FullName}");
             new Thread(() =>
             {
                 try
                 {
-                    CloneDirectory(ffxivcfg, Path.Combine(temp, "game"), backupAll);
-                    if(pluginsConfigsDir != null) CloneDirectory(pluginsConfigsDir.FullName, Path.Combine(temp, "plugins"), true);
+                    var gameSuccess = CloneDirectory(ffxivcfg, Path.Combine(temp, "game"), backupAll);
+                    var pluginSuccess = true;
+                    if (pluginsConfigsDir != null)
+                    {
+                        pluginSuccess = CloneDirectory(pluginsConfigsDir.FullName, Path.Combine(temp, "plugins"), true);
+                    }
 
                     if (!Directory.Exists(path))
                     {
-                        PluginLog.Information($"Creating {path}");
+                        PluginLog.Verbose($"Creating {path}");
                         var di = Directory.CreateDirectory(path);
+                    }
+                    try
+                    {
+                        var appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+                        var xivlauncherDir = Path.Combine(appDataDir, "XIVLauncher");
+                        var ConfigurationPath = Path.Combine(xivlauncherDir, "dalamudConfig.json");
+                        PluginLog.Verbose($"Copying from {ConfigurationPath} to {temp}");
+                        CopyFile(ConfigurationPath, temp);
+                    }
+                    catch(Exception ex)
+                    {
+                        PluginLog.Error($"Error copying Dalamud configuration: {ex.Message}\n{ex.StackTrace ?? ""}");
                     }
                     var outfile = Path.Combine(path, $"Backup-FFXIV-{DateTimeOffset.Now:yyyy-MM-dd HH-mm-ss-fffffff}");
                     if (config.UseDefaultZip)
@@ -109,7 +128,7 @@ namespace JustBackup
                         {
                             StartInfo = szinfo
                         };
-                        szproc.OutputDataReceived += (sender, args) => PluginLog.Information("7-zip output: {0}", args.Data);
+                        szproc.OutputDataReceived += (sender, args) => PluginLog.Debug("7-zip output: {0}", args.Data);
                         szproc.Start();
                         szproc.PriorityClass = ProcessPriorityClass.BelowNormal;
                         szproc.BeginOutputReadLine();
@@ -120,22 +139,42 @@ namespace JustBackup
                         }
                     }
                     PluginLog.Information("Backup complete.");
+                    var fileList = new List<(string path, DateTimeOffset time)>();
                     foreach (var file in Directory.GetFiles(path))
                     {
                         if(DateTimeOffset.TryParseExact(Path.GetFileName(file).Replace("Backup-FFXIV-", "").Replace(".zip", "").Replace(".7z", ""), "yyyy-MM-dd HH-mm-ss-fffffff", CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AssumeLocal, out var time))
                         {
-                            if(DateTimeOffset.Now.ToUnixTimeSeconds() > time.ToUnixTimeSeconds() + (long)daysToKeep.TotalSeconds)
+                            fileList.Add((file, time));
+                        }
+                    }
+                    if(fileList.Count <= toKeep)
+                    {
+                        PluginLog.Debug($"{fileList.Count} backups found, {toKeep} ordered to be kept, not deleting anything");
+                    }
+                    else
+                    {
+                        foreach (var file in fileList.OrderByDescending(x => x.time).ToArray()[toKeep..])
+                        {
+                            if (DateTimeOffset.Now.ToUnixTimeSeconds() > file.time.ToUnixTimeSeconds() + (long)daysToKeep.TotalSeconds)
                             {
-                                PluginLog.Information($"Deleting outdated backup {file}.");
-                                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file,
+                                PluginLog.Information($"Deleting outdated backup {file.path}.");
+                                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.path,
                                     Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
                                     Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
                             }
                         }
                     }
+                    
                     new TickScheduler(delegate
                     {
-                        Svc.PluginInterface.UiBuilder.AddNotification("Backup created successfully!", this.Name, NotificationType.Success);
+                        if (pluginSuccess && gameSuccess)
+                        {
+                            Svc.PluginInterface.UiBuilder.AddNotification("Backup created successfully!", this.Name, NotificationType.Success);
+                        }
+                        else
+                        {
+                            Svc.PluginInterface.UiBuilder.AddNotification("There were errors while creating backup, please check log", this.Name, NotificationType.Warning);
+                        }
                     }, Svc.Framework);
                 }
                 catch(Exception ex)
@@ -143,7 +182,7 @@ namespace JustBackup
                     PluginLog.Error($"Error creating backup: {ex.Message}\n{ex.StackTrace ?? ""}");
                     new TickScheduler(delegate
                     {
-                        Svc.PluginInterface.UiBuilder.AddNotification("Error creating backup:\n" + ex.Message, this.Name, NotificationType.Error);
+                        Svc.PluginInterface.UiBuilder.AddNotification("Could not create backup:\n" + ex.Message, this.Name, NotificationType.Error);
                     }, Svc.Framework);
                 }
                 try
@@ -161,8 +200,9 @@ namespace JustBackup
             }).Start();
         }
 
-        void CloneDirectory(string root, string dest, bool all)
+        bool CloneDirectory(string root, string dest, bool all)
         {
+            var success = true;
             foreach (var directory in Directory.GetDirectories(root))
             {
                 string dirName = Path.GetFileName(directory);
@@ -170,7 +210,7 @@ namespace JustBackup
                 var path = Path.Combine(dest, dirName);
                 if (!Directory.Exists(path))
                 {
-                    PluginLog.Information($"Creating {path}");
+                    PluginLog.Verbose($"Creating {path}");
                     Directory.CreateDirectory(path);
                 }
                 CloneDirectory(directory, path, all);
@@ -180,20 +220,31 @@ namespace JustBackup
             {
                 if(all || file.EndsWith(".dat", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".cfg", StringComparison.OrdinalIgnoreCase))
                 {
-                    PluginLog.Information($"Copying from {file} to {dest}");
-                    CopyFile(file, dest);
+                    PluginLog.Verbose($"Copying from {file} to {dest}");
+                    if (!CopyFile(file, dest)) success = false;
                 }
             }
+
+            return success;
         }
 
-        static void CopyFile(string file, string dest)
+        static bool CopyFile(string file, string dest)
         {
-            using var inputFile = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            using var outputFile = new FileStream(Path.Combine(dest, Path.GetFileName(file)), FileMode.Create);
-            var size = inputFile.Length;
-            var content = new byte[size];
-            inputFile.Read(content, 0, (int)size);
-            outputFile.Write(content, 0, (int)size);
+            try
+            {
+                using var inputFile = new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                using var outputFile = new FileStream(Path.Combine(dest, Path.GetFileName(file)), FileMode.Create);
+                var size = inputFile.Length;
+                var content = new byte[size];
+                inputFile.Read(content, 0, (int)size);
+                outputFile.Write(content, 0, (int)size);
+                return true;
+            }
+            catch(Exception e)
+            {
+                PluginLog.Error($"Error copying file {file} to {dest}: {e.Message}\n{e.StackTrace}");
+                return false;
+            }
         }
     }
 }

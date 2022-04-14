@@ -37,6 +37,8 @@ namespace JustBackup
             ImGui.DragInt("Delete backups older than, days", ref p.config.DaysToKeep, 0.1f, 7, 100000);
             if (p.config.DaysToKeep < 7) p.config.DaysToKeep = 7;
             ImGui.Text("  Note: backups will be deleted to recycle bin, if available.");
+            ImGui.SetNextItemWidth(50f);
+            ImGui.DragInt("Always keep at least this number of backup regardless of their date", ref p.config.BackupsToKeep, 0.1f, 10, 100000);
             ImGui.Checkbox("Include plugin configurations", ref p.config.BackupPluginConfigs);
             ImGui.Checkbox("Include ALL files inside FFXIV's data folder into backup", ref p.config.BackupAll);
             ImGui.Text("  (otherwise only config files will be saved, screenshots, logs, etc will be skipped)");

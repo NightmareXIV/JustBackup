@@ -16,5 +16,6 @@ namespace JustBackup
         public bool BackupAll = false;
         public bool UseDefaultZip = false;
         public bool BackupPluginConfigs = true;
+        public int BackupsToKeep = 10;
     }
 }

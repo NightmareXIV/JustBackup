@@ -2,6 +2,7 @@
   "Author": "Eternita",
   "Name": "JustBackup",
   "InternalName": "JustBackup",
-  "Description": "Automatically backup your game and plugin configuration (upon game starting).",
+  "Punchline": "Automatically backup your game and plugin configuration.",
+  "Description": "This plugin automatically backups your game and plugin configurations upon game/plugin starting.",
   "RepoUrl": "https://github.com/Eternita-S/JustBackup"
 }
