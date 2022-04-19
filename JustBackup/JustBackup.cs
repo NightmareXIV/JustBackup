@@ -51,6 +51,21 @@ namespace JustBackup
 
         void DoBackup()
         {
+            if (config.DaysToKeep < 0)
+            {
+                PluginLog.Warning($"config.DaysToKeep={config.DaysToKeep}, which is invalid value and is reset to 0.");
+                config.DaysToKeep = 0;
+            }
+            if (config.DaysToKeep > 730)
+            {
+                PluginLog.Warning($"config.DaysToKeep={config.DaysToKeep}, which is invalid value and is reset to 730.");
+                config.DaysToKeep = 730;
+            }
+            if (config.BackupsToKeep < 0)
+            {
+                PluginLog.Warning($"config.BackupsToKeep={config.BackupsToKeep}, which is invalid value and is reset to 0.");
+                config.BackupsToKeep = 0;
+            }
             var path = GetBackupPath();
             var stamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             var temp = Path.Combine(Path.GetTempPath(), $"JustBackup-{stamp}");
@@ -73,6 +88,7 @@ namespace JustBackup
             var daysToKeep = TimeSpan.FromDays(config.DaysToKeep);
             var backupAll = config.BackupAll;
             var toKeep = config.BackupsToKeep;
+            var enableDelete = config.DeleteBackups;
             PluginLog.Information($"Backup path: {path}\nTemp folder: {temp}\nFfxiv config folder: {ffxivcfg}\nPlugin config folder: {pluginsConfigsDir?.FullName}");
             new Thread(() =>
             {
@@ -139,30 +155,38 @@ namespace JustBackup
                         }
                     }
                     PluginLog.Information("Backup complete.");
-                    var fileList = new List<(string path, DateTimeOffset time)>();
-                    foreach (var file in Directory.GetFiles(path))
+                    if (enableDelete)
                     {
-                        if(DateTimeOffset.TryParseExact(Path.GetFileName(file).Replace("Backup-FFXIV-", "").Replace(".zip", "").Replace(".7z", ""), "yyyy-MM-dd HH-mm-ss-fffffff", CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AssumeLocal, out var time))
+                        PluginLog.Debug($"Beginning auto-deletion of old backups");
+                        var fileList = new List<(string path, DateTimeOffset time)>();
+                        foreach (var file in Directory.GetFiles(path))
                         {
-                            fileList.Add((file, time));
+                            if (DateTimeOffset.TryParseExact(Path.GetFileName(file).Replace("Backup-FFXIV-", "").Replace(".zip", "").Replace(".7z", ""), "yyyy-MM-dd HH-mm-ss-fffffff", CultureInfo.InvariantCulture.DateTimeFormat, DateTimeStyles.AssumeLocal, out var time))
+                            {
+                                fileList.Add((file, time));
+                            }
                         }
-                    }
-                    if(fileList.Count <= toKeep)
-                    {
-                        PluginLog.Debug($"{fileList.Count} backups found, {toKeep} ordered to be kept, not deleting anything");
+                        if (fileList.Count <= toKeep)
+                        {
+                            PluginLog.Debug($"{fileList.Count} backups found, {toKeep} ordered to be kept, not deleting anything");
+                        }
+                        else
+                        {
+                            foreach (var file in fileList.OrderByDescending(x => x.time).ToArray()[toKeep..])
+                            {
+                                if (DateTimeOffset.Now.ToUnixTimeSeconds() > file.time.ToUnixTimeSeconds() + (long)daysToKeep.TotalSeconds)
+                                {
+                                    PluginLog.Information($"Deleting outdated backup {file.path}.");
+                                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.path,
+                                        Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+                                        Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                                }
+                            }
+                        }
                     }
                     else
                     {
-                        foreach (var file in fileList.OrderByDescending(x => x.time).ToArray()[toKeep..])
-                        {
-                            if (DateTimeOffset.Now.ToUnixTimeSeconds() > file.time.ToUnixTimeSeconds() + (long)daysToKeep.TotalSeconds)
-                            {
-                                PluginLog.Information($"Deleting outdated backup {file.path}.");
-                                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.path,
-                                    Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
-                                    Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
-                            }
-                        }
+                        PluginLog.Debug("User disabled backup auto-deletion, skipping...");
                     }
                     
                     new TickScheduler(delegate
