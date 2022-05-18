@@ -25,11 +25,20 @@ namespace JustBackup
             ImGui.TextUnformatted(@"Custom backup path (by default: %localappdata%\JustBackup):");
             ImGui.SetNextItemWidth(400f);
             ImGui.InputText("##PathToBkp", ref p.config.BackupPath, 100);
-            if(ImGui.Button("Open backup folder"))
+            if (ImGui.Button("Open backup folder"))
             {
                 Process.Start(new ProcessStartInfo()
                 {
                     FileName = p.GetBackupPath(),
+                    UseShellExecute = true
+                });
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Open FFXIV confiruation folder"))
+            {
+                Process.Start(new ProcessStartInfo()
+                {
+                    FileName = JustBackup.GetFFXIVConfigFolder(),
                     UseShellExecute = true
                 });
             }
@@ -51,6 +60,7 @@ namespace JustBackup
             ImGui.Text("  (otherwise only config files will be saved, screenshots, logs, etc will be skipped)");
             ImGui.Checkbox("Use built-in zip method instead of 7-zip", ref p.config.UseDefaultZip);
             if (p.config.UseDefaultZip) ImGui.TextColored(ImGuiColors.DalamudRed, "7-zip archives are taking up to 15 times less space!");
+            ImGui.Checkbox("Do not restrict amount of resources 7-zip can use", ref p.config.NoThreadLimit);
         }
 
         public override void OnClose()

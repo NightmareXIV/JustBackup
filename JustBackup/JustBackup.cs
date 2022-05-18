@@ -69,8 +69,7 @@ namespace JustBackup
             var path = GetBackupPath();
             var stamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             var temp = Path.Combine(Path.GetTempPath(), $"JustBackup-{stamp}");
-            var ffxivcfg = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), 
-                "My Games", "FINAL FANTASY XIV - A Realm Reborn");
+            var ffxivcfg = GetFFXIVConfigFolder();
             DirectoryInfo pluginsConfigsDir = null;
             if (config.BackupPluginConfigs)
             {
@@ -89,6 +88,7 @@ namespace JustBackup
             var backupAll = config.BackupAll;
             var toKeep = config.BackupsToKeep;
             var enableDelete = config.DeleteBackups;
+            var unlimited = config.NoThreadLimit;
             PluginLog.Information($"Backup path: {path}\nTemp folder: {temp}\nFfxiv config folder: {ffxivcfg}\nPlugin config folder: {pluginsConfigsDir?.FullName}");
             new Thread(() =>
             {
@@ -135,7 +135,7 @@ namespace JustBackup
                         //a -m0=LZMA2 -mmt1 -mx9 -t7z "H:\te mp\test1.7z" "c:\vs\NotificationMaster"
                         szinfo.ArgumentList.Add("a");
                         szinfo.ArgumentList.Add("-m0=LZMA2");
-                        szinfo.ArgumentList.Add("-mmt1");
+                        if(!unlimited) szinfo.ArgumentList.Add("-mmt1");
                         szinfo.ArgumentList.Add("-mx9");
                         szinfo.ArgumentList.Add("-t7z");
                         szinfo.ArgumentList.Add(outfile + ".7z");
@@ -222,6 +222,12 @@ namespace JustBackup
                     }, Svc.Framework);
                 }
             }).Start();
+        }
+
+        internal static string GetFFXIVConfigFolder()
+        {
+            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                "My Games", "FINAL FANTASY XIV - A Realm Reborn");
         }
 
         bool CloneDirectory(string root, string dest, bool all)
