@@ -67,3 +67,17 @@ If you have lost only one specific plugin's configuration settings and wish to r
 ![image](Manual/image_475.png)
 
 5. Confirm all requests to overwrite existing files. After copying is complete, you may install or enable the plugin again.
+
+## Restoring main Dalamud configuration file
+Dalamud configuration file contains following information:
+- General Dalamud preferences
+- Custom ImGUI styles
+- Your third party repository list
+- Your developer plugins location list
+- Testing version settings
+
+Dalamud configuration file is located in `%appdata%\XIVLauncher` folder and has name `dalamudConfig.json`. It has the same name in the backup archive.
+
+To restore it, simply copy `dalamudConfig.json` file into `%appdata%\XIVLauncher` folder and confirm overwrite. Your game must be fully closed before you can do so.
+
+![image](Manual/image_476.png)
