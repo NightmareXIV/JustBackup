@@ -57,6 +57,7 @@ To do so, firstly remove all the contents of `pluginConfigs` folder, or move it 
 If you have lost only one specific plugin's configuration settings and wish to restore it, follow these steps:
 1. Uninstall or disable that plugin. Usually you can not restore plugin's configuration while that plugin is running. 
 2. Open up "plugins" folder in your backup archive and locate file or/and folder that have the name of your plugin. Sometimes internal and visible names of plugins may differ slightly (for example: Discord Rich Presence's configuration will be named `Dalamud.RichPresence.json`) - but you should not have much trouble locating it. 
+
 | WARNING: some plugins only have single file as configuration. Some instead have folders with bunch of files. Some can have both - file and folder with extra configuration. You must restore both at once, unless you know what you're doing. If your plugin has configuration folder, you have to delete existing one before restoring it from backup. |
 | --- |
 
