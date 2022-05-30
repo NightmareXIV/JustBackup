@@ -25,7 +25,7 @@ Your game confguration is usually located in `%userprofile%\Documents\My Games\F
 ![image](Manual/image_469.png)
 
 ## Restoring whole game configuration at once
-To do so, simply go into `game` folder inside backup archive, select everything and drag files into `FINAL FANTASY XIV - A Realm Reborn`, and confirm all requests to overwrite existing files. After that your game configuration will be restored to previous state.
+To do so, simply go into `game` folder inside backup archive, select everything and drag files into `FINAL FANTASY XIV - A Realm Reborn`, and confirm all requests to overwrite existing files. After that your game configuration will be restored to previous state and you may launch your game.
 
 ![image](Manual/image_470.png)
 
@@ -42,3 +42,13 @@ If you have lost only one specific character's configuration settings and wish t
 ![image](Manual/image_472.png)
 
 5. Confirm all requests to overwrite existing files. After copying is complete, you may log back on your character.
+
+## Locating plugins configuration folder
+Your plugins confguration is usually located in `%appdata%\XIVLauncher\pluginConfigs` folder. You can as well use corresponding button inside JustBackup's configuration to open it up:
+
+![image](Manual/image_473.png)
+
+## Restoring whole plugins configuration at once
+To do so, firstly remove all the contents of `pluginConfigs` folder, or move it elsewhere. Then go into `plugins` folder inside backup archive, select everything and drag files into `pluginConfigs`. After that your plugins configuration will be restored to previous state and you may launch your game.
+
+![image](Manual/image_474.png)
