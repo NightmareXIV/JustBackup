@@ -12,6 +12,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Reflection;
 using System.Threading;
+using ECommons.Schedulers;
 
 namespace JustBackup
 {
@@ -24,7 +25,7 @@ namespace JustBackup
 
         public JustBackup(DalamudPluginInterface pluginInterface)
         {
-            pluginInterface.Create<Svc>();
+            ECommons.ECommons.Init(pluginInterface, false);
             config = Svc.PluginInterface.GetPluginConfig() as Config ?? new Config();
             windowSystem = new();
             configWindow = new(this);
@@ -40,6 +41,7 @@ namespace JustBackup
 
         public void Dispose()
         {
+            ECommons.ECommons.Dispose();
             Svc.PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             Svc.Commands.RemoveHandler("/justbackup");
         }
@@ -199,7 +201,7 @@ namespace JustBackup
                         {
                             Svc.PluginInterface.UiBuilder.AddNotification("There were errors while creating backup, please check log", this.Name, NotificationType.Warning);
                         }
-                    }, Svc.Framework);
+                    });
                 }
                 catch(Exception ex)
                 {
@@ -207,7 +209,7 @@ namespace JustBackup
                     new TickScheduler(delegate
                     {
                         Svc.PluginInterface.UiBuilder.AddNotification("Could not create backup:\n" + ex.Message, this.Name, NotificationType.Error);
-                    }, Svc.Framework);
+                    });
                 }
                 try
                 {
@@ -219,7 +221,7 @@ namespace JustBackup
                     new TickScheduler(delegate
                     {
                         Svc.PluginInterface.UiBuilder.AddNotification("Error deleting temp files:\n" + ex.Message, this.Name, NotificationType.Error);
-                    }, Svc.Framework);
+                    });
                 }
             }).Start();
         }
