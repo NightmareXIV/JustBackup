@@ -52,3 +52,17 @@ Your plugins confguration is usually located in `%appdata%\XIVLauncher\pluginCon
 To do so, firstly remove all the contents of `pluginConfigs` folder, or move it elsewhere. Then go into `plugins` folder inside backup archive, select everything and drag files into `pluginConfigs`. After that your plugins configuration will be restored to previous state and you may launch your game.
 
 ![image](Manual/image_474.png)
+
+## Restoring specific plugin's configuration
+If you have lost only one specific plugin's configuration settings and wish to restore it, follow these steps:
+1. Uninstall or disable that plugin. Usually you can not restore plugin's configuration while that plugin is running. 
+2. Open up "plugins" folder in your backup archive and locate file or/and folder that have the name of your plugin. Sometimes internal and visible names of plugins may differ slightly (for example: Discord Rich Presence's configuration will be named `Dalamud.RichPresence.json`) - but you should not have much trouble locating it. 
+| WARNING: some plugins only have single file as configuration. Some instead have folders with bunch of files. Some can have both - file and folder with extra configuration. You must restore both at once, unless you know what you're doing. If your plugin has configuration folder, you have to delete existing one before restoring it from backup. |
+| --- |
+
+3. Open up `pluginConfigs` directory as explained previously.
+4. In the backup archive select configuration file or/and folder of a plugin that you are going to restore and copy them into `pluginConfigs` directory:
+
+![image](Manual/image_475.png)
+
+5. Confirm all requests to overwrite existing files. After copying is complete, you may install or enable the plugin again.
