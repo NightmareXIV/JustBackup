@@ -28,3 +28,17 @@ Your game confguration is usually located in `%userprofile%\Documents\My Games\F
 To do so, simply go into `game` folder inside backup archive, select everything and drag files into `FINAL FANTASY XIV - A Realm Reborn`, and confirm all requests to overwrite existing files. After that your game configuration will be restored to previous state.
 
 ![image](Manual/image_470.png)
+
+## Restoring specific character's configuration
+If you have lost only one specific character's configuration settings and wish to restore it, you will need to locate your character's directory. To do so, follow these steps:
+1. Log in on character whose settings you want to restore.
+2. Open JustBackup's configuration and press "Open current character's config directory" button. Alternatively, use SimpleTweaks and it's "Character directory command" tweak to do so:
+
+![image](Manual/image_471.png)
+
+3. Log out. In this specific situation you do not have to close the whole game completely; logging out will be enough.
+4. Locate folder with same name inside backup archive and copy it's contents over to the folder you have just opened up:
+
+![image](Manual/image_472.png)
+
+5. Confirm all requests to overwrite existing files. After copying is complete, you may log back on your character.
