@@ -19,36 +19,30 @@ namespace JustBackup
             ImGui.InputText("##PathToBkp", ref p.config.BackupPath, 100);
             if (ImGui.Button("Open backup folder"))
             {
-                Process.Start(new ProcessStartInfo()
-                {
-                    FileName = p.GetBackupPath(),
-                    UseShellExecute = true
-                });
+                ShellStart(p.GetBackupPath());
             }
             ImGui.SameLine();
+            ImGuiEx.WithTextColor(ImGuiColors.DalamudOrange, delegate
+            {
+                if (ImGui.Button("Read how to restore a backup"))
+                {
+                    ShellStart("https://github.com/Eternita-S/JustBackup/blob/master/README.md#restoring-a-backup");
+                }
+            });
             if (ImGui.Button("Open FFXIV confiruation folder"))
             {
-                Process.Start(new ProcessStartInfo()
-                {
-                    FileName = JustBackup.GetFFXIVConfigFolder(),
-                    UseShellExecute = true
-                });
+                ShellStart(JustBackup.GetFFXIVConfigFolder());
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Open plugins confiruation folder"))
+            {
+                ShellStart(JustBackup.GetPluginsConfigDir().FullName);
             }
             if(Svc.ClientState.LocalPlayer != null)
             {
                 if(ImGui.Button("Open current character's config directory"))
                 {
-                    Safe(() =>
-                    {
-                        Process.Start(new ProcessStartInfo()
-                        {
-                            FileName = Path.Combine(JustBackup.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}"),
-                            UseShellExecute = true
-                        });
-                    }, (e) =>
-                    {
-                        Notify.Error("Could not open directory:\n" + e);
-                    });
+                    ShellStart(Path.Combine(JustBackup.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}"));
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Add identification info"))
@@ -67,7 +61,7 @@ namespace JustBackup
                 ImGuiEx.Tooltip("Adds an empty file into character's config directory\n" +
                     "containing character's name and home world");
             }
-            ImGui.SameLine();
+            
             ImGui.Checkbox("Automatically remove old backups", ref p.config.DeleteBackups);
             if (p.config.DeleteBackups)
             {

@@ -19,6 +19,7 @@ namespace JustBackup
     public class JustBackup : IDalamudPlugin
     {
         public string Name => "JustBackup";
+        const string UrlFileName = "How to restore a backup.url";
         internal Config config;
         WindowSystem windowSystem;
         ConfigWindow configWindow;
@@ -77,8 +78,7 @@ namespace JustBackup
             {
                 try
                 {
-                    var c = Svc.PluginInterface.GetType().GetField("configs", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Svc.PluginInterface);
-                    pluginsConfigsDir = (DirectoryInfo)c.GetType().GetField("configDirectory", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(c);
+                    pluginsConfigsDir = GetPluginsConfigDir();
                 }
                 catch(Exception e)
                 {
@@ -120,6 +120,7 @@ namespace JustBackup
                     {
                         PluginLog.Error($"Error copying Dalamud configuration: {ex.Message}\n{ex.StackTrace ?? ""}");
                     }
+                    CopyFile(Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName, UrlFileName), temp);
                     var outfile = Path.Combine(path, $"Backup-FFXIV-{DateTimeOffset.Now:yyyy-MM-dd HH-mm-ss-fffffff}");
                     if (config.UseDefaultZip)
                     {
@@ -224,6 +225,12 @@ namespace JustBackup
                     });
                 }
             }).Start();
+        }
+
+        internal static DirectoryInfo GetPluginsConfigDir()
+        {
+            var c = Svc.PluginInterface.GetType().GetField("configs", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(Svc.PluginInterface);
+            return (DirectoryInfo)c.GetType().GetField("configDirectory", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(c);
         }
 
         internal static string GetFFXIVConfigFolder()
