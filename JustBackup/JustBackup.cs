@@ -186,31 +186,25 @@ namespace JustBackup
                                 }
                             }
                         }
+                        PluginLog.Debug($"Finishing auto-deletion of old backups");
                     }
                     else
                     {
                         PluginLog.Debug("User disabled backup auto-deletion, skipping...");
                     }
-                    
-                    new TickScheduler(delegate
+                    if (pluginSuccess && gameSuccess)
                     {
-                        if (pluginSuccess && gameSuccess)
-                        {
-                            Svc.PluginInterface.UiBuilder.AddNotification("Backup created successfully!", this.Name, NotificationType.Success);
-                        }
-                        else
-                        {
-                            Svc.PluginInterface.UiBuilder.AddNotification("There were errors while creating backup, please check log", this.Name, NotificationType.Warning);
-                        }
-                    });
+                        Notify.Success("Backup created successfully!");
+                    }
+                    else
+                    {
+                        Notify.Warning("There were errors while creating backup, please check log");
+                    }
                 }
                 catch(Exception ex)
                 {
                     PluginLog.Error($"Error creating backup: {ex.Message}\n{ex.StackTrace ?? ""}");
-                    new TickScheduler(delegate
-                    {
-                        Svc.PluginInterface.UiBuilder.AddNotification("Could not create backup:\n" + ex.Message, this.Name, NotificationType.Error);
-                    });
+                    Notify.Error("Could not create backup:\n" + ex.Message);
                 }
                 try
                 {
@@ -219,10 +213,7 @@ namespace JustBackup
                 catch (Exception ex)
                 {
                     PluginLog.Error($"Error deleting temp files: {ex.Message}\n{ex.StackTrace ?? ""}");
-                    new TickScheduler(delegate
-                    {
-                        Svc.PluginInterface.UiBuilder.AddNotification("Error deleting temp files:\n" + ex.Message, this.Name, NotificationType.Error);
-                    });
+                    Notify.Error("Error deleting temp files:\n" + ex.Message);
                 }
             }).Start();
         }

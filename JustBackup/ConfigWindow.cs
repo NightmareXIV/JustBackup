@@ -29,7 +29,7 @@ namespace JustBackup
                     ShellStart("https://github.com/Eternita-S/JustBackup/blob/master/README.md#restoring-a-backup");
                 }
             });
-            if (ImGui.Button("Open FFXIV confiruation folder"))
+            if (ImGui.Button("Open FFXIV configuration folder"))
             {
                 ShellStart(JustBackup.GetFFXIVConfigFolder());
             }
