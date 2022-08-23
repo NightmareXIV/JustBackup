@@ -34,7 +34,7 @@ namespace JustBackup
                 ShellStart(JustBackup.GetFFXIVConfigFolder());
             }
             ImGui.SameLine();
-            if (ImGui.Button("Open plugins confiruation folder"))
+            if (ImGui.Button("Open plugins configuration folder"))
             {
                 ShellStart(JustBackup.GetPluginsConfigDir().FullName);
             }
