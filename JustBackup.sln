@@ -5,7 +5,7 @@ VisualStudioVersion = 17.1.32203.90
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "JustBackup", "JustBackup\JustBackup.csproj", "{7650F853-6D97-42E1-A3C8-F816AAA6BEFB}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ECommons", "..\ECommons\ECommons\ECommons.csproj", "{5299D5EF-6AAB-422B-86DD-CEEC1BDA843E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ECommons", "ECommons\ECommons\ECommons.csproj", "{21609B97-A738-4887-8A31-21E6BBE30BB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,14 +23,14 @@ Global
 		{7650F853-6D97-42E1-A3C8-F816AAA6BEFB}.Release|Any CPU.Build.0 = Release|x64
 		{7650F853-6D97-42E1-A3C8-F816AAA6BEFB}.Release|x64.ActiveCfg = Release|x64
 		{7650F853-6D97-42E1-A3C8-F816AAA6BEFB}.Release|x64.Build.0 = Release|x64
-		{5299D5EF-6AAB-422B-86DD-CEEC1BDA843E}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{5299D5EF-6AAB-422B-86DD-CEEC1BDA843E}.Debug|Any CPU.Build.0 = Debug|x64
-		{5299D5EF-6AAB-422B-86DD-CEEC1BDA843E}.Debug|x64.ActiveCfg = Debug|x64
-		{5299D5EF-6AAB-422B-86DD-CEEC1BDA843E}.Debug|x64.Build.0 = Debug|x64
-		{5299D5EF-6AAB-422B-86DD-CEEC1BDA843E}.Release|Any CPU.ActiveCfg = Release|x64
-		{5299D5EF-6AAB-422B-86DD-CEEC1BDA843E}.Release|Any CPU.Build.0 = Release|x64
-		{5299D5EF-6AAB-422B-86DD-CEEC1BDA843E}.Release|x64.ActiveCfg = Release|x64
-		{5299D5EF-6AAB-422B-86DD-CEEC1BDA843E}.Release|x64.Build.0 = Release|x64
+		{21609B97-A738-4887-8A31-21E6BBE30BB4}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{21609B97-A738-4887-8A31-21E6BBE30BB4}.Debug|Any CPU.Build.0 = Debug|x64
+		{21609B97-A738-4887-8A31-21E6BBE30BB4}.Debug|x64.ActiveCfg = Debug|x64
+		{21609B97-A738-4887-8A31-21E6BBE30BB4}.Debug|x64.Build.0 = Debug|x64
+		{21609B97-A738-4887-8A31-21E6BBE30BB4}.Release|Any CPU.ActiveCfg = Release|x64
+		{21609B97-A738-4887-8A31-21E6BBE30BB4}.Release|Any CPU.Build.0 = Release|x64
+		{21609B97-A738-4887-8A31-21E6BBE30BB4}.Release|x64.ActiveCfg = Release|x64
+		{21609B97-A738-4887-8A31-21E6BBE30BB4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

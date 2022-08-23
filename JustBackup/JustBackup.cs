@@ -26,7 +26,7 @@ namespace JustBackup
 
         public JustBackup(DalamudPluginInterface pluginInterface)
         {
-            ECommons.ECommons.Init(pluginInterface, false);
+            ECommons.ECommons.Init(pluginInterface);
             config = Svc.PluginInterface.GetPluginConfig() as Config ?? new Config();
             windowSystem = new();
             configWindow = new(this);
