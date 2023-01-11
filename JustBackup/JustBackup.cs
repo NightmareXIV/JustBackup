@@ -13,6 +13,7 @@ using System.IO.Compression;
 using System.Reflection;
 using System.Threading;
 using ECommons.Schedulers;
+using ECommons;
 
 namespace JustBackup
 {
@@ -26,7 +27,7 @@ namespace JustBackup
 
         public JustBackup(DalamudPluginInterface pluginInterface)
         {
-            ECommons.ECommons.Init(pluginInterface);
+            ECommonsMain.Init(pluginInterface, this);
             config = Svc.PluginInterface.GetPluginConfig() as Config ?? new Config();
             windowSystem = new();
             configWindow = new(this);
@@ -42,7 +43,7 @@ namespace JustBackup
 
         public void Dispose()
         {
-            ECommons.ECommons.Dispose();
+            ECommonsMain.Dispose();
             Svc.PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             Svc.Commands.RemoveHandler("/justbackup");
         }
