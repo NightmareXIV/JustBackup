@@ -119,6 +119,9 @@ namespace JustBackup
                         var ConfigurationPath = Path.Combine(xivlauncherDir, "dalamudConfig.json");
                         PluginLog.Verbose($"Copying from {ConfigurationPath} to {temp}");
                         CopyFile(ConfigurationPath, temp);
+                        var UIConfigurationPath = Path.Combine(xivlauncherDir, "dalamudUI.ini");
+                        PluginLog.Verbose($"Copying from {UIConfigurationPath} to {temp}");
+                        CopyFile(UIConfigurationPath, temp);
                     }
                     catch(Exception ex)
                     {
