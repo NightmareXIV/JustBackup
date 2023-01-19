@@ -69,7 +69,7 @@ namespace JustBackup
                 ImGui.DragInt("Delete backups older than, days", ref p.config.DaysToKeep, 0.1f, 3, 730);
                 if (p.config.DaysToKeep < 3) p.config.DaysToKeep = 3;
                 if (p.config.DaysToKeep > 730) p.config.DaysToKeep = 730;
-                ImGuiEx.Text("  Note: backups will be deleted to recycle bin, if available.");
+                ImGui.Checkbox("Delete to recycle bin, if available.", ref p.config.DeleteToRecycleBin);
                 ImGui.SetNextItemWidth(50f);
                 ImGui.DragInt("Always keep at least this number of backup regardless of their date", ref p.config.BackupsToKeep, 0.1f, 10, 100000);
                 if (p.config.BackupsToKeep < 0) p.config.BackupsToKeep = 0;

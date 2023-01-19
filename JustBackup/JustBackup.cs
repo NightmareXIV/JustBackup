@@ -91,6 +91,9 @@ namespace JustBackup
             var backupAll = config.BackupAll;
             var toKeep = config.BackupsToKeep;
             var enableDelete = config.DeleteBackups;
+            var selectedRecycleOption = config.DeleteToRecycleBin
+                ? Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin
+                : Microsoft.VisualBasic.FileIO.RecycleOption.DeletePermanently;
             var unlimited = config.NoThreadLimit;
             PluginLog.Information($"Backup path: {path}\nTemp folder: {temp}\nFfxiv config folder: {ffxivcfg}\nPlugin config folder: {pluginsConfigsDir?.FullName}");
             new Thread(() =>
@@ -183,7 +186,7 @@ namespace JustBackup
                                     PluginLog.Information($"Deleting outdated backup {file.path}.");
                                     Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.path,
                                         Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
-                                        Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin);
+                                        selectedRecycleOption);
                                 }
                             }
                         }
