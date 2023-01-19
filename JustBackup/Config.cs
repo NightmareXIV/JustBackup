@@ -13,6 +13,7 @@ namespace JustBackup
         public int Version { get; set; } = 1;
         public string BackupPath = "";
         public bool DeleteBackups = true;
+        public bool DeleteToRecycleBin = true;
         public int DaysToKeep = 7;
         public bool BackupAll = false;
         public bool UseDefaultZip = false;
