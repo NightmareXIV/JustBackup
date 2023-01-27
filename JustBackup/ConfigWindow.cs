@@ -26,7 +26,7 @@ namespace JustBackup
             {
                 if (ImGui.Button("Read how to restore a backup"))
                 {
-                    ShellStart("https://github.com/Eternita-S/JustBackup/blob/master/README.md#restoring-a-backup");
+                    ShellStart("https://github.com/NightmareXIV/JustBackup/blob/master/README.md#restoring-a-backup");
                 }
             });
             if (ImGui.Button("Open FFXIV configuration folder"))
@@ -81,6 +81,7 @@ namespace JustBackup
             ImGui.Checkbox("Use built-in zip method instead of 7-zip", ref p.config.UseDefaultZip);
             if (p.config.UseDefaultZip) ImGuiEx.Text(ImGuiColors.DalamudRed, "7-zip archives are taking up to 15 times less space!");
             ImGui.Checkbox("Do not restrict amount of resources 7-zip can use", ref p.config.NoThreadLimit);
+            ImGuiEx.ImGuiLineCentered("Donate", KoFiButton.DrawButton);
         }
 
         public override void OnClose()

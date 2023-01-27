@@ -28,6 +28,7 @@ namespace JustBackup
         public JustBackup(DalamudPluginInterface pluginInterface)
         {
             ECommonsMain.Init(pluginInterface, this);
+            KoFiButton.IsOfficialPlugin = true;
             config = Svc.PluginInterface.GetPluginConfig() as Config ?? new Config();
             windowSystem = new();
             configWindow = new(this);
@@ -145,7 +146,10 @@ namespace JustBackup
                         //a -m0=LZMA2 -mmt1 -mx9 -t7z "H:\te mp\test1.7z" "c:\vs\NotificationMaster"
                         szinfo.ArgumentList.Add("a");
                         szinfo.ArgumentList.Add("-m0=LZMA2");
-                        if(!unlimited) szinfo.ArgumentList.Add("-mmt1");
+                        if (!unlimited)
+                        {
+                            szinfo.ArgumentList.Add("-mmt1");
+                        }
                         szinfo.ArgumentList.Add("-mx9");
                         szinfo.ArgumentList.Add("-t7z");
                         szinfo.ArgumentList.Add(outfile + ".7z");
