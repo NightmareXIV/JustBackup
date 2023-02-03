@@ -3,6 +3,7 @@ using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using System;
 using System.Linq;
 using System.Collections.Generic;
@@ -235,10 +236,9 @@ namespace JustBackup
             return (DirectoryInfo)c.GetType().GetField("configDirectory", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(c);
         }
 
-        internal static string GetFFXIVConfigFolder()
+        unsafe internal static string GetFFXIVConfigFolder()
         {
-            return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                "My Games", "FINAL FANTASY XIV - A Realm Reborn");
+            return Framework.Instance()-> UserPath;
         }
 
         bool CloneDirectory(string root, string dest, bool all)
