@@ -248,6 +248,7 @@ namespace JustBackup
             {
                 string dirName = Path.GetFileName(directory);
                 //if (dirName.Equals("splatoon", StringComparison.OrdinalIgnoreCase)) continue; //don't need to backup backups
+                if (dirName.Equals("replay", StringComparison.OrdinalIgnoreCase) && !all) continue; //don't backup replays by default
                 var path = Path.Combine(dest, dirName);
                 if (!Directory.Exists(path))
                 {
