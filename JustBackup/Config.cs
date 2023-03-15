@@ -20,5 +20,6 @@ namespace JustBackup
         public bool BackupPluginConfigs = true;
         public int BackupsToKeep = 10;
         public bool NoThreadLimit = false;
+        public List<string> Ignore = new();
     }
 }

@@ -250,6 +250,7 @@ namespace JustBackup
                 //if (dirName.Equals("splatoon", StringComparison.OrdinalIgnoreCase)) continue; //don't need to backup backups
                 if (dirName.Equals("replay", StringComparison.OrdinalIgnoreCase) && !all) continue; //don't backup replays by default
                 var path = Path.Combine(dest, dirName);
+                if (config.Ignore.Any(f => path.Contains(f, StringComparison.InvariantCultureIgnoreCase))) continue;
                 if (!Directory.Exists(path))
                 {
                     PluginLog.Verbose($"Creating {path}");
@@ -260,6 +261,7 @@ namespace JustBackup
 
             foreach (var file in Directory.GetFiles(root))
             {
+                if (config.Ignore.Any(f => file.Contains(f, StringComparison.InvariantCultureIgnoreCase))) continue;
                 if(all || file.EndsWith(".dat", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".cfg", StringComparison.OrdinalIgnoreCase))
                 {
                     PluginLog.Verbose($"Copying from {file} to {dest}");
