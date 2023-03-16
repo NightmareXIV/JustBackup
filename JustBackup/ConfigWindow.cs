@@ -6,6 +6,7 @@ namespace JustBackup
     internal class ConfigWindow : Window
     {
         private JustBackup p;
+        private string newIgnoredFile = string.Empty;
 
         public ConfigWindow(JustBackup p) : base("JustBackup configuration", ImGuiWindowFlags.AlwaysAutoResize)
         {
@@ -82,6 +83,25 @@ namespace JustBackup
             ImGui.Checkbox("Use built-in zip method instead of 7-zip", ref p.config.UseDefaultZip);
             if (p.config.UseDefaultZip) ImGuiEx.Text(ImGuiColors.DalamudRed, "7-zip archives are taking up to 15 times less space!");
             ImGui.Checkbox("Do not restrict amount of resources 7-zip can use", ref p.config.NoThreadLimit);
+            if (ImGui.CollapsingHeader("Ignored Files")) {
+                foreach (var file in p.config.Ignore.ToArray()) {
+                    if (ImGui.SmallButton("x")) {
+                        p.config.Ignore.Remove(file);
+                    }
+                    ImGui.SameLine();
+                    ImGui.Text(file);
+                }
+
+                if (ImGui.SmallButton("+")) {
+                    if (!p.config.Ignore.Contains(newIgnoredFile, StringComparer.InvariantCultureIgnoreCase)) {
+                        p.config.Ignore.Add(newIgnoredFile);
+                        newIgnoredFile = string.Empty;
+                    }
+                }
+                ImGui.SameLine();
+
+                ImGui.InputText("Add Ignored File", ref newIgnoredFile, 512);
+            }
             ImGuiEx.ImGuiLineCentered("Donate", KoFiButton.DrawButton);
         }
 
