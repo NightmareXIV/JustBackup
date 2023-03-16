@@ -32,7 +32,7 @@ namespace JustBackup
             });
             if (ImGui.Button("Open FFXIV configuration folder"))
             {
-                ShellStart(JustBackup.GetFFXIVConfigFolder());
+                ShellStart(p.GetFFXIVConfigFolder());
             }
             ImGui.SameLine();
             if (ImGui.Button("Open plugins configuration folder"))
@@ -43,14 +43,14 @@ namespace JustBackup
             {
                 if(ImGui.Button("Open current character's config directory"))
                 {
-                    ShellStart(Path.Combine(JustBackup.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}"));
+                    ShellStart(Path.Combine(p.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}"));
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Add identification info"))
                 {
                     Safe(() =>
                     {
-                        var fname = Path.Combine(JustBackup.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}",
+                        var fname = Path.Combine(p.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}",
                             $"_{Svc.ClientState.LocalPlayer.Name}@{Svc.ClientState.LocalPlayer.HomeWorld.GameData.Name}.dat");
                         File.Create(fname).Dispose();
                         Notify.Success("Added identification info for current character");
@@ -83,9 +83,10 @@ namespace JustBackup
             ImGui.Checkbox("Use built-in zip method instead of 7-zip", ref p.config.UseDefaultZip);
             if (p.config.UseDefaultZip) ImGuiEx.Text(ImGuiColors.DalamudRed, "7-zip archives are taking up to 15 times less space!");
             ImGui.Checkbox("Do not restrict amount of resources 7-zip can use", ref p.config.NoThreadLimit);
-            if (ImGui.CollapsingHeader("Ignored Files")) {
+            var id = 0;
+            if (ImGui.CollapsingHeader("Ignored Pathes (beta)")) {
                 foreach (var file in p.config.Ignore.ToArray()) {
-                    if (ImGui.SmallButton("x")) {
+                    if (ImGui.SmallButton($"x##{id++}")) {
                         p.config.Ignore.Remove(file);
                     }
                     ImGui.SameLine();
@@ -100,7 +101,13 @@ namespace JustBackup
                 }
                 ImGui.SameLine();
 
-                ImGui.InputText("Add Ignored File", ref newIgnoredFile, 512);
+                ImGui.InputText("Ignored (partial) Path", ref newIgnoredFile, 512);
+            }
+            if(ImGui.CollapsingHeader("Expert options"))
+            {
+                ImGuiEx.Text($"Override game configuration folder path:");
+                ImGuiEx.SetNextItemFullWidth();
+                ImGui.InputText($"##pathGame", ref p.config.OverrideGamePath, 2000);
             }
             ImGuiEx.ImGuiLineCentered("Donate", KoFiButton.DrawButton);
         }

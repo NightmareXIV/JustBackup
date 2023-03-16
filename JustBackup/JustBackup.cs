@@ -309,9 +309,10 @@ namespace JustBackup
             return (DirectoryInfo)c.GetType().GetField("configDirectory", BindingFlags.NonPublic | BindingFlags.Instance).GetValue(c);
         }
 
-        unsafe internal static string GetFFXIVConfigFolder()
+        unsafe internal string GetFFXIVConfigFolder()
         {
-            return Framework.Instance()-> UserPath;
+            if (config.OverrideGamePath.Trim() != "") return config.OverrideGamePath;
+            return Framework.Instance()->UserPath;
         }
 
         bool CloneDirectory(string root, string dest, bool all) => CloneDirectory(root, dest, all, Array.Empty<string>());

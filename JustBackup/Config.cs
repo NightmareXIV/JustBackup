@@ -23,5 +23,6 @@ namespace JustBackup
         public bool NoThreadLimit = false;
         public List<string> Ignore = new();
         public HashSet<string> TempPathes = new();
+        public string OverrideGamePath = "";
     }
 }
