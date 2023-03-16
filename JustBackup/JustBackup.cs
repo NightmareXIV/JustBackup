@@ -25,6 +25,7 @@ namespace JustBackup
         internal Config config;
         WindowSystem windowSystem;
         ConfigWindow configWindow;
+        ModalWindowAskBackup askBackup;
 
         public JustBackup(DalamudPluginInterface pluginInterface)
         {
@@ -33,7 +34,9 @@ namespace JustBackup
             config = Svc.PluginInterface.GetPluginConfig() as Config ?? new Config();
             windowSystem = new();
             configWindow = new(this);
+            askBackup = new();
             windowSystem.AddWindow(configWindow);
+            windowSystem.AddWindow(askBackup);
             Svc.PluginInterface.UiBuilder.Draw += windowSystem.Draw;
             DoBackup();
             Svc.PluginInterface.UiBuilder.OpenConfigUi += delegate { configWindow.IsOpen = true; };
@@ -48,6 +51,7 @@ namespace JustBackup
             ECommonsMain.Dispose();
             Svc.PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             Svc.Commands.RemoveHandler("/justbackup");
+            config = null;
         }
 
         internal string GetBackupPath()
@@ -55,7 +59,37 @@ namespace JustBackup
             return config.BackupPath != string.Empty ? config.BackupPath : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "JustBackup");
         }
 
-        void DoBackup()
+        internal void DoBackup()
+        {
+            var FileName = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName, "7zr.exe");
+            bool isRunning = false;
+            foreach(var x in Process.GetProcesses().Where(x => x.ProcessName.Contains("7zr")))
+            {
+                try
+                {
+                    if (x.MainModule.FileName == FileName)
+                    {
+                        isRunning = true;
+                        break;
+                    }
+                }
+                catch(Exception e)
+                {
+                    PluginLog.Debug($"Process {x.ProcessName}");
+                    e.LogWarning();
+                }
+            }
+            if (isRunning)
+            {
+                askBackup.IsOpen = true;
+            }
+            else
+            {
+                DoBackupInternal();
+            }
+        }
+
+        internal void DoBackupInternal()
         {
             if (config.DaysToKeep < 0)
             {
@@ -75,6 +109,8 @@ namespace JustBackup
             var path = GetBackupPath();
             var stamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
             var temp = Path.Combine(Path.GetTempPath(), $"JustBackup-{stamp}");
+            config.TempPathes.Add(temp);
+            Svc.PluginInterface.SavePluginConfig(config);
             var ffxivcfg = GetFFXIVConfigFolder();
             DirectoryInfo pluginsConfigsDir = null;
             if (config.BackupPluginConfigs)
@@ -83,7 +119,7 @@ namespace JustBackup
                 {
                     pluginsConfigsDir = GetPluginsConfigDir();
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     PluginLog.Error($"Can't back up plugin configurations: {e.Message}\n{e.StackTrace ?? ""}");
                     Svc.PluginInterface.UiBuilder.AddNotification("Error creating plugin configuration backup:\n" + e.Message, this.Name, NotificationType.Error);
@@ -98,11 +134,48 @@ namespace JustBackup
                 : Microsoft.VisualBasic.FileIO.RecycleOption.DeletePermanently;
             var unlimited = config.NoThreadLimit;
             PluginLog.Information($"Backup path: {path}\nTemp folder: {temp}\nFfxiv config folder: {ffxivcfg}\nPlugin config folder: {pluginsConfigsDir?.FullName}");
+            var exclusionsGame = new List<string>();
+            if (config.ExcludeReplays)
+            {
+                exclusionsGame.Add("replay");
+            }
+            var cleanup = config.TempPathes.ToArray();
+
             new Thread(() =>
             {
                 try
                 {
-                    var gameSuccess = CloneDirectory(ffxivcfg, Path.Combine(temp, "game"), backupAll);
+                    PluginLog.Debug($"Cleaning up old temporary files");
+                    foreach(var x in cleanup)
+                    {
+                        if (!x.Contains("JustBackup-"))
+                        {
+                            PluginLog.Error($"Cleanup path {x} contains invalid data. Skipping.");
+                        }
+                        else
+                        {
+                            if (Directory.Exists(x))
+                            {
+                                PluginLog.Warning($"Deleting old temporary directory {x}");
+                                try
+                                {
+                                    //Directory.Delete(x, true);
+                                }
+                                catch (Exception e)
+                                {
+                                    e.Log();
+                                }
+                            }
+                        }
+                    }
+                    PluginLog.Debug($"Cleanup finished");
+                    new TickScheduler(delegate
+                    {
+                        config.TempPathes.RemoveWhere(x => !Directory.Exists(x));
+                        Svc.PluginInterface.SavePluginConfig(config);
+                    });
+
+                    var gameSuccess = CloneDirectory(ffxivcfg, Path.Combine(temp, "game"), backupAll, exclusionsGame.ToArray());
                     var pluginSuccess = true;
                     if (pluginsConfigsDir != null)
                     {
@@ -241,21 +314,23 @@ namespace JustBackup
             return Framework.Instance()-> UserPath;
         }
 
-        bool CloneDirectory(string root, string dest, bool all)
+        bool CloneDirectory(string root, string dest, bool all) => CloneDirectory(root, dest, all, Array.Empty<string>());
+
+        bool CloneDirectory(string root, string dest, bool all, string[] Exclusions)
         {
             var success = true;
             foreach (var directory in Directory.GetDirectories(root))
             {
                 string dirName = Path.GetFileName(directory);
                 //if (dirName.Equals("splatoon", StringComparison.OrdinalIgnoreCase)) continue; //don't need to backup backups
-                if (dirName.Equals("replay", StringComparison.OrdinalIgnoreCase) && !all) continue; //don't backup replays by default
+                if (dirName.EqualsIgnoreCaseAny(Exclusions)) continue;
                 var path = Path.Combine(dest, dirName);
                 if (!Directory.Exists(path))
                 {
                     PluginLog.Verbose($"Creating {path}");
                     Directory.CreateDirectory(path);
                 }
-                CloneDirectory(directory, path, all);
+                CloneDirectory(directory, path, all, Exclusions);
             }
 
             foreach (var file in Directory.GetFiles(root))

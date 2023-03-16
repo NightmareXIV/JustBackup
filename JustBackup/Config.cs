@@ -16,9 +16,11 @@ namespace JustBackup
         public bool DeleteToRecycleBin = true;
         public int DaysToKeep = 7;
         public bool BackupAll = false;
+        public bool ExcludeReplays = false;
         public bool UseDefaultZip = false;
         public bool BackupPluginConfigs = true;
         public int BackupsToKeep = 10;
-        public bool NoThreadLimit = false;
+        public bool NoThreadLimit = true;
+        public HashSet<string> TempPathes = new();
     }
 }

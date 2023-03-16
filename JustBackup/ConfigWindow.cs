@@ -78,6 +78,7 @@ namespace JustBackup
             ImGui.Checkbox("Include plugin configurations", ref p.config.BackupPluginConfigs);
             ImGui.Checkbox("Include ALL files inside FFXIV's data folder into backup", ref p.config.BackupAll);
             ImGuiEx.Text("  (otherwise only config files will be saved, screenshots, logs, etc will be skipped)");
+            ImGui.Checkbox($"Exclude replays from backup", ref p.config.ExcludeReplays);
             ImGui.Checkbox("Use built-in zip method instead of 7-zip", ref p.config.UseDefaultZip);
             if (p.config.UseDefaultZip) ImGuiEx.Text(ImGuiColors.DalamudRed, "7-zip archives are taking up to 15 times less space!");
             ImGui.Checkbox("Do not restrict amount of resources 7-zip can use", ref p.config.NoThreadLimit);
