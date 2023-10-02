@@ -16,6 +16,7 @@
 		<OutputPath>bin\$(Configuration)\</OutputPath>
 		<NoWarn>CS1591</NoWarn>
 		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+      <EnableWindowsTargeting>true</EnableWindowsTargeting>
 	</PropertyGroup>
 
 	<PropertyGroup Label="Documentation">
