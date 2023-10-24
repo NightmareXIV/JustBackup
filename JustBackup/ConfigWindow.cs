@@ -1,5 +1,8 @@
-﻿using System.Diagnostics;
+﻿using Dalamud.Interface.Components;
+using ECommons.Logging;
+using System.Diagnostics;
 using System.IO;
+using static Dalamud.Interface.Utility.Raii.ImRaii;
 
 namespace JustBackup
 {
@@ -8,61 +11,29 @@ namespace JustBackup
         private JustBackup p;
         private string newIgnoredFile = string.Empty;
 
-        public ConfigWindow(JustBackup p) : base("JustBackup configuration", ImGuiWindowFlags.AlwaysAutoResize)
+        public ConfigWindow(JustBackup p) : base("JustBackup configuration")
         {
             this.p = p;
         }
 
-        public override void Draw()
+        void Settings()
         {
+            ImGuiEx.ImGuiLineCentered("restore", () =>
+            {
+                ImGuiEx.WithTextColor(ImGuiColors.DalamudOrange, delegate
+                {
+                    if (ImGui.Button("Read how to restore a backup"))
+                    {
+                        ShellStart("https://github.com/NightmareXIV/JustBackup/blob/master/README.md#restoring-a-backup");
+                    }
+                });
+            });
             ImGuiEx.Text(@"Custom backup path (by default: %localappdata%\JustBackup):");
             ImGui.SetNextItemWidth(400f);
             ImGui.InputText("##PathToBkp", ref p.config.BackupPath, 100);
-            if (ImGui.Button("Open backup folder"))
-            {
-                ShellStart(p.GetBackupPath());
-            }
-            ImGui.SameLine();
-            ImGuiEx.WithTextColor(ImGuiColors.DalamudOrange, delegate
-            {
-                if (ImGui.Button("Read how to restore a backup"))
-                {
-                    ShellStart("https://github.com/NightmareXIV/JustBackup/blob/master/README.md#restoring-a-backup");
-                }
-            });
-            if (ImGui.Button("Open FFXIV configuration folder"))
-            {
-                ShellStart(p.GetFFXIVConfigFolder());
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Open plugins configuration folder"))
-            {
-                ShellStart(JustBackup.GetPluginsConfigDir().FullName);
-            }
-            if(Svc.ClientState.LocalPlayer != null)
-            {
-                if(ImGui.Button("Open current character's config directory"))
-                {
-                    ShellStart(Path.Combine(p.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}"));
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Add identification info"))
-                {
-                    Safe(() =>
-                    {
-                        var fname = Path.Combine(p.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}",
-                            $"_{Svc.ClientState.LocalPlayer.Name}@{Svc.ClientState.LocalPlayer.HomeWorld.GameData.Name}.dat");
-                        File.Create(fname).Dispose();
-                        Notify.Success("Added identification info for current character");
-                    }, (e) =>
-                    {
-                        Notify.Error("Error while adding identification info for current character:\n" + e);
-                    });
-                }
-                ImGuiEx.Tooltip("Adds an empty file into character's config directory\n" +
-                    "containing character's name and home world");
-            }
-            
+            ImGuiEx.Text(@"Custom temporary files path (by default: %temp%):");
+            ImGui.SetNextItemWidth(400f);
+            ImGui.InputText("##PathToTmp", ref p.config.TempPath, 100);
             ImGui.Checkbox("Automatically remove old backups", ref p.config.DeleteBackups);
             if (p.config.DeleteBackups)
             {
@@ -83,33 +54,106 @@ namespace JustBackup
             ImGui.Checkbox("Use built-in zip method instead of 7-zip", ref p.config.UseDefaultZip);
             if (p.config.UseDefaultZip) ImGuiEx.Text(ImGuiColors.DalamudRed, "7-zip archives are taking up to 15 times less space!");
             ImGui.Checkbox("Do not restrict amount of resources 7-zip can use", ref p.config.NoThreadLimit);
-            var id = 0;
-            if (ImGui.CollapsingHeader("Ignored Pathes (beta)")) {
-                foreach (var file in p.config.Ignore.ToArray()) {
-                    if (ImGui.SmallButton($"x##{id++}")) {
-                        p.config.Ignore.Remove(file);
-                    }
-                    ImGui.SameLine();
-                    ImGui.Text(file);
-                }
+            ImGui.SetNextItemWidth(100f);
+            ImGui.SliderInt($"Minimal interval between backups, minutes", ref p.config.MinIntervalBetweenBackups.ValidateRange(0, 360), 0, 60);
+            ImGuiComponents.HelpMarker("Backup will not be created if previous backup was created less than this amount of minutes. Note that only successfully completed backups will update interval.");
+        }
 
-                if (ImGui.SmallButton("+")) {
-                    if (!p.config.Ignore.Contains(newIgnoredFile, StringComparer.InvariantCultureIgnoreCase)) {
-                        p.config.Ignore.Add(newIgnoredFile);
-                        newIgnoredFile = string.Empty;
-                    }
+        void Tools()
+        {
+            if (ImGui.Button("Open backup folder"))
+            {
+                ShellStart(p.GetBackupPath());
+            }
+            ImGuiEx.WithTextColor(ImGuiColors.DalamudOrange, delegate
+            {
+                if (ImGui.Button("Read how to restore a backup"))
+                {
+                    ShellStart("https://github.com/NightmareXIV/JustBackup/blob/master/README.md#restoring-a-backup");
+                }
+            });
+            if (ImGui.Button("Open FFXIV configuration folder"))
+            {
+                ShellStart(p.GetFFXIVConfigFolder());
+            }
+            if (ImGui.Button("Open plugins configuration folder"))
+            {
+                ShellStart(JustBackup.GetPluginsConfigDir().FullName);
+            }
+            if (Svc.ClientState.LocalPlayer != null)
+            {
+                if (ImGui.Button("Open current character's config directory"))
+                {
+                    ShellStart(Path.Combine(p.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}"));
+                }
+                if (ImGui.Button("Add identification info"))
+                {
+                    Safe(() =>
+                    {
+                        var fname = Path.Combine(p.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}",
+                            $"_{Svc.ClientState.LocalPlayer.Name}@{Svc.ClientState.LocalPlayer.HomeWorld.GameData.Name}.dat");
+                        File.Create(fname).Dispose();
+                        Notify.Success("Added identification info for current character");
+                    }, (e) =>
+                    {
+                        Notify.Error("Error while adding identification info for current character:\n" + e);
+                    });
+                }
+                ImGuiEx.Tooltip("Adds an empty file into character's config directory\n" +
+                    "containing character's name and home world");
+            }
+        }
+
+
+        void Ignored()
+        {
+            var id = 0;
+            foreach (var file in p.config.Ignore.ToArray())
+            {
+                if (ImGui.SmallButton($"x##{id++}"))
+                {
+                    p.config.Ignore.Remove(file);
                 }
                 ImGui.SameLine();
+                ImGui.Text(file);
+            }
 
-                ImGui.InputText("Ignored (partial) Path", ref newIgnoredFile, 512);
-            }
-            if(ImGui.CollapsingHeader("Expert options"))
+            if (ImGui.SmallButton("+"))
             {
-                ImGuiEx.Text($"Override game configuration folder path:");
-                ImGuiEx.SetNextItemFullWidth();
-                ImGui.InputText($"##pathGame", ref p.config.OverrideGamePath, 2000);
+                if (!p.config.Ignore.Contains(newIgnoredFile, StringComparer.InvariantCultureIgnoreCase))
+                {
+                    p.config.Ignore.Add(newIgnoredFile);
+                    newIgnoredFile = string.Empty;
+                }
             }
-            ImGuiEx.ImGuiLineCentered("Donate", KoFiButton.DrawButton);
+            ImGui.SameLine();
+
+            ImGui.InputText("Ignored (partial) Path", ref newIgnoredFile, 512);
+        }
+
+        void Expert()
+        {
+            ImGuiEx.Text($"Override game configuration folder path:");
+            ImGuiEx.SetNextItemFullWidth();
+            ImGui.InputText($"##pathGame", ref p.config.OverrideGamePath, 2000);
+            ImGui.SetNextItemWidth(150f);
+            ImGui.InputInt("Maximum threads", ref p.config.MaxThreads.ValidateRange(1, 99), 1, 99);
+            ImGui.SetNextItemWidth(100f);
+            ImGui.SliderInt($"Throttle copying, ms", ref p.config.CopyThrottle.ValidateRange(0, 50), 0, 5);
+            ImGuiComponents.HelpMarker("The higher this value, the longer backup creation will take but the less loaded your SSD/HDD will be. Increase this value if you're experiencing lag during backup process.");
+        }
+
+        public override void Draw()
+        {
+            KoFiButton.DrawRight();
+            ImGuiEx.EzTabBar("default", true,
+                ("Settings", Settings, null, true),
+                ("Tools", Tools, null, true),
+                ("Ignored pathes (beta)", Ignored, null, true),
+                ("Expert options", Expert, null, true),
+                InternalLog.ImGuiTab()
+                );
+                       
         }
 
         public override void OnClose()

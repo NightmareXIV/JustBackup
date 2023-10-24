@@ -12,6 +12,7 @@ namespace JustBackup
     {
         public int Version { get; set; } = 1;
         public string BackupPath = "";
+        public string TempPath = "";
         public bool DeleteBackups = true;
         public bool DeleteToRecycleBin = true;
         public int DaysToKeep = 7;
@@ -21,8 +22,12 @@ namespace JustBackup
         public bool BackupPluginConfigs = true;
         public int BackupsToKeep = 10;
         public bool NoThreadLimit = false;
+        public int MaxThreads = 99;
         public List<string> Ignore = new();
         public HashSet<string> TempPathes = new();
         public string OverrideGamePath = "";
+        public int MinIntervalBetweenBackups = 0;
+        public long LastSuccessfulBackup = 0;
+        public int CopyThrottle = 0;
     }
 }

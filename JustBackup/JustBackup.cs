@@ -1,7 +1,7 @@
 ﻿using Dalamud.Configuration;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Windowing;
-using Dalamud.Logging;
+using ECommons.Logging;
 using Dalamud.Plugin;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using System;
@@ -26,9 +26,11 @@ namespace JustBackup
         WindowSystem windowSystem;
         ConfigWindow configWindow;
         ModalWindowAskBackup askBackup;
+        internal static JustBackup P;
 
         public JustBackup(DalamudPluginInterface pluginInterface)
         {
+            P = this;
             ECommonsMain.Init(pluginInterface, this);
             KoFiButton.IsOfficialPlugin = true;
             config = Svc.PluginInterface.GetPluginConfig() as Config ?? new Config();
@@ -40,10 +42,11 @@ namespace JustBackup
             Svc.PluginInterface.UiBuilder.Draw += windowSystem.Draw;
             DoBackup();
             Svc.PluginInterface.UiBuilder.OpenConfigUi += delegate { configWindow.IsOpen = true; };
-            Svc.Commands.AddHandler("/justbackup", new Dalamud.Game.Command.CommandInfo(delegate { DoBackup(); })
+            Svc.Commands.AddHandler("/justbackup", new Dalamud.Game.Command.CommandInfo(delegate { DoBackup(true); })
             {
                 HelpMessage = "do a manual backup"
             });
+            InternalLog.Debug($"Processor count: {Environment.ProcessorCount}");
         }
 
         public void Dispose()
@@ -52,6 +55,7 @@ namespace JustBackup
             Svc.PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             Svc.Commands.RemoveHandler("/justbackup");
             config = null;
+            P = null;
         }
 
         internal string GetBackupPath()
@@ -59,8 +63,16 @@ namespace JustBackup
             return config.BackupPath != string.Empty ? config.BackupPath : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "JustBackup");
         }
 
-        internal void DoBackup()
+        internal void DoBackup(bool force = false)
         {
+            if (!force && config.MinIntervalBetweenBackups > 0)
+            {
+                if(DateTimeOffset.Now.ToUnixTimeMilliseconds() - config.LastSuccessfulBackup < config.MinIntervalBetweenBackups * 60 * 1000)
+                {
+                    Notify.Info($"Backup skipped because {config.MinIntervalBetweenBackups} minutes did not passed yet since last backup");
+                    return;
+                }
+            }
             var FileName = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName, "7zr.exe");
             bool isRunning = false;
             foreach(var x in Process.GetProcesses().Where(x => x.ProcessName.Contains("7zr")))
@@ -108,7 +120,16 @@ namespace JustBackup
             }
             var path = GetBackupPath();
             var stamp = DateTimeOffset.Now.ToUnixTimeMilliseconds();
-            var temp = Path.Combine(Path.GetTempPath(), $"JustBackup-{stamp}");
+            var temp = "";
+            if (config.TempPath != "" && Directory.Exists(config.TempPath) && Utils.HasWriteAccessToFolder(config.TempPath))
+            {
+                temp = Path.Combine(config.TempPath, $"JustBackup-{stamp}");
+            }
+            else
+            {
+                temp = Path.Combine(Path.GetTempPath(), $"JustBackup-{stamp}");
+            }
+            PluginLog.Debug($"Temp path is determined as {temp}");
             config.TempPathes.Add(temp);
             Svc.PluginInterface.SavePluginConfig(config);
             var ffxivcfg = GetFFXIVConfigFolder();
@@ -159,7 +180,7 @@ namespace JustBackup
                                 PluginLog.Warning($"Deleting old temporary directory {x}");
                                 try
                                 {
-                                    //Directory.Delete(x, true);
+                                    Directory.Delete(x, true);
                                 }
                                 catch (Exception e)
                                 {
@@ -222,7 +243,17 @@ namespace JustBackup
                         szinfo.ArgumentList.Add("-m0=LZMA2");
                         if (!unlimited)
                         {
+                            var threads = Math.Max(1, (int)(Environment.ProcessorCount / 4));
+                            if(threads > config.MaxThreads && config.MaxThreads > 0) threads = config.MaxThreads;
+                            PluginLog.Debug($"Threads to use: {threads}");
                             szinfo.ArgumentList.Add("-mmt1");
+                        }
+                        else
+                        {
+                            if(config.MaxThreads < Environment.ProcessorCount)
+                            {
+                                szinfo.ArgumentList.Add($"-mmt{config.MaxThreads}");
+                            }
                         }
                         szinfo.ArgumentList.Add("-mx9");
                         szinfo.ArgumentList.Add("-t7z");
@@ -232,7 +263,7 @@ namespace JustBackup
                         {
                             StartInfo = szinfo
                         };
-                        szproc.OutputDataReceived += (sender, args) => PluginLog.Debug("7-zip output: {0}", args.Data);
+                        szproc.OutputDataReceived += (sender, args) => PluginLog.Debug($"7-zip output: {args.Data}");
                         szproc.Start();
                         szproc.PriorityClass = ProcessPriorityClass.BelowNormal;
                         szproc.BeginOutputReadLine();
@@ -280,6 +311,11 @@ namespace JustBackup
                     if (pluginSuccess && gameSuccess)
                     {
                         Notify.Success("Backup created successfully!");
+                        new TickScheduler(() =>
+                        {
+                            config.LastSuccessfulBackup = DateTimeOffset.Now.ToUnixTimeMilliseconds();
+                            Svc.PluginInterface.SavePluginConfig(config);
+                        });
                     }
                     else
                     {
@@ -358,6 +394,7 @@ namespace JustBackup
                 var content = new byte[size];
                 inputFile.Read(content, 0, (int)size);
                 outputFile.Write(content, 0, (int)size);
+                if (P.config.CopyThrottle > 0) Thread.Sleep(P.config.CopyThrottle);
                 return true;
             }
             catch(Exception e)
