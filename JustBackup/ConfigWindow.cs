@@ -55,7 +55,7 @@ namespace JustBackup
             if (p.config.UseDefaultZip) ImGuiEx.Text(ImGuiColors.DalamudRed, "7-zip archives are taking up to 15 times less space!");
             ImGui.Checkbox("Do not restrict amount of resources 7-zip can use", ref p.config.NoThreadLimit);
             ImGui.SetNextItemWidth(100f);
-            ImGui.SliderInt($"Minimal interval between backups, minutes", ref p.config.MinIntervalBetweenBackups.ValidateRange(0, 360), 0, 60);
+            ImGui.SliderInt($"Minimal interval between backups, minutes", ref p.config.MinIntervalBetweenBackups, 0, 60);
             ImGuiComponents.HelpMarker("Backup will not be created if previous backup was created less than this amount of minutes. Note that only successfully completed backups will update interval.");
         }
 
