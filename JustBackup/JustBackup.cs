@@ -349,7 +349,8 @@ namespace JustBackup
         unsafe internal string GetFFXIVConfigFolder()
         {
             if (config.OverrideGamePath.Trim() != "") return config.OverrideGamePath;
-            return new string(Framework.Instance()->UserPath);
+            var path = Framework.Instance()->UserPath;
+            return new string(path).Split("\0")[0];
         }
 
         bool CloneDirectory(string root, string dest, bool all) => CloneDirectory(root, dest, all, Array.Empty<string>());
