@@ -2,6 +2,7 @@
 using Dalamud.Interface.Utility;
 using Dalamud.Logging;
 using ECommons;
+using ECommons.Logging;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

@@ -1,5 +1,4 @@
 ﻿using Dalamud.Configuration;
-using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Windowing;
 using ECommons.Logging;
 using Dalamud.Plugin;
@@ -15,6 +14,8 @@ using System.Reflection;
 using System.Threading;
 using ECommons.Schedulers;
 using ECommons;
+using ECommons.Funding;
+using Dalamud.Interface.ImGuiNotification;
 
 namespace JustBackup
 {
@@ -28,11 +29,11 @@ namespace JustBackup
         ModalWindowAskBackup askBackup;
         internal static JustBackup P;
 
-        public JustBackup(DalamudPluginInterface pluginInterface)
+        public JustBackup(IDalamudPluginInterface pluginInterface)
         {
             P = this;
             ECommonsMain.Init(pluginInterface, this);
-            KoFiButton.IsOfficialPlugin = true;
+            PatreonBanner.IsOfficialPlugin = () => true;
             config = Svc.PluginInterface.GetPluginConfig() as Config ?? new Config();
             windowSystem = new();
             configWindow = new(this);
@@ -348,7 +349,7 @@ namespace JustBackup
         unsafe internal string GetFFXIVConfigFolder()
         {
             if (config.OverrideGamePath.Trim() != "") return config.OverrideGamePath;
-            return Framework.Instance()->UserPath;
+            return new string(Framework.Instance()->UserPath);
         }
 
         bool CloneDirectory(string root, string dest, bool all) => CloneDirectory(root, dest, all, Array.Empty<string>());

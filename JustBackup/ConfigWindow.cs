@@ -1,4 +1,5 @@
 ﻿using Dalamud.Interface.Components;
+using ECommons.Funding;
 using ECommons.Logging;
 using System.Diagnostics;
 using System.IO;
@@ -18,7 +19,7 @@ namespace JustBackup
 
         void Settings()
         {
-            ImGuiEx.ImGuiLineCentered("restore", () =>
+            ImGuiEx.LineCentered("restore", () =>
             {
                 ImGuiEx.WithTextColor(ImGuiColors.DalamudOrange, delegate
                 {
@@ -145,8 +146,8 @@ namespace JustBackup
 
         public override void Draw()
         {
-            KoFiButton.DrawRight();
-            ImGuiEx.EzTabBar("default", true,
+            PatreonBanner.DrawRight();
+            ImGuiEx.EzTabBar("default", PatreonBanner.Text,
                 ("Settings", Settings, null, true),
                 ("Tools", Tools, null, true),
                 ("Ignored pathes (beta)", Ignored, null, true),
