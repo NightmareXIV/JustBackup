@@ -16,6 +16,7 @@ using ECommons.Schedulers;
 using ECommons;
 using ECommons.Funding;
 using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Common;
 
 namespace JustBackup
 {
@@ -211,12 +212,12 @@ namespace JustBackup
                     }
                     try
                     {
-                        var appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                        var xivlauncherDir = Path.Combine(appDataDir, "XIVLauncher");
-                        var ConfigurationPath = Path.Combine(xivlauncherDir, "dalamudConfig.json");
+                        var dalamudRoot = Svc.PluginInterface.GetType().Assembly.GetType("Dalamud.Service`1", true)!.MakeGenericType(Svc.PluginInterface.GetType().Assembly.GetType("Dalamud.Dalamud", true)!).GetMethod("Get")!.Invoke(null, BindingFlags.Default, null, [], null);
+                        var dalamudStartInfo = dalamudRoot?.GetType().GetProperty("StartInfo", BindingFlags.NonPublic | BindingFlags.Instance)?.GetValue(dalamudRoot) as DalamudStartInfo;
+                        var ConfigurationPath = dalamudStartInfo.ConfigurationPath;
                         PluginLog.Verbose($"Copying from {ConfigurationPath} to {temp}");
                         CopyFile(ConfigurationPath, temp);
-                        var UIConfigurationPath = Path.Combine(xivlauncherDir, "dalamudUI.ini");
+                        var UIConfigurationPath = Path.Combine(Path.GetDirectoryName(ConfigurationPath), "dalamudUI.ini");
                         PluginLog.Verbose($"Copying from {UIConfigurationPath} to {temp}");
                         CopyFile(UIConfigurationPath, temp);
                     }
