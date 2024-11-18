@@ -12,10 +12,12 @@ using ECommons;
 using ECommons.Funding;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Common;
+using ECommons.Reflection;
+using PInvoke;
 
 namespace JustBackup;
 
-public class JustBackup : IDalamudPlugin
+public unsafe class JustBackup : IDalamudPlugin
 {
     public string Name => "JustBackup";
     const string UrlFileName = "How to restore a backup.url";
@@ -159,8 +161,23 @@ public class JustBackup : IDalamudPlugin
         }
         var cleanup = config.TempPathes.ToArray();
 
-        new Thread(() =>
+        var thread = new Thread(() =>
         {
+            var loweredPrio = false;
+            try
+            {
+                var threadHandle = Kernel32.GetCurrentThread().DangerousGetHandle();
+                if(Interop.SetThreadPriority(threadHandle, Interop.ThreadPriorityClass.THREAD_MODE_BACKGROUND_BEGIN))
+                {
+                    PluginLog.Information($"Lowered worker thread priority");
+                    loweredPrio = true;
+                }
+                else
+                {
+                    PluginLog.Warning($"Failed to lower worker thread priority: {Kernel32.GetLastError()}");
+                }
+            }
+            catch(Exception e) { e.Log(); }
             try
             {
                 PluginLog.Debug($"Cleaning up old temporary files");
@@ -210,9 +227,22 @@ public class JustBackup : IDalamudPlugin
                     var appDataDir = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
                     var xivlauncherDir = Path.Combine(appDataDir, "XIVLauncher");
                     var ConfigurationPath = Path.Combine(xivlauncherDir, "dalamudConfig.json");
+                    var UIConfigurationPath = Path.Combine(xivlauncherDir, "dalamudUI.ini");
+
+                    try
+                    {
+                        if(DalamudReflector.TryGetDalamudStartInfo(out var dalamudStartInfo))
+                        {
+                            ConfigurationPath = dalamudStartInfo.ConfigurationPath;
+                            UIConfigurationPath = Path.Combine(Path.GetDirectoryName(ConfigurationPath), "dalamudUI.ini");
+                        }
+                    }
+                    catch(Exception e)
+                    {
+                        PluginLog.Error($"Could not obtain Dalamud start info:\n{e}");
+                    }
                     PluginLog.Verbose($"Copying from {ConfigurationPath} to {temp}");
                     CopyFile(ConfigurationPath, temp);
-                    var UIConfigurationPath = Path.Combine(xivlauncherDir, "dalamudUI.ini");
                     PluginLog.Verbose($"Copying from {UIConfigurationPath} to {temp}");
                     CopyFile(UIConfigurationPath, temp);
                 }
@@ -241,7 +271,7 @@ public class JustBackup : IDalamudPlugin
                     if (!unlimited)
                     {
                         var threads = Math.Max(1, (int)(Environment.ProcessorCount / 4));
-                        if(threads > config.MaxThreads && config.MaxThreads > 0) threads = config.MaxThreads;
+                        if(config.MaxThreads > threads && config.MaxThreads > 0) threads = config.MaxThreads;
                         PluginLog.Debug($"Threads to use: {threads}");
                         szinfo.ArgumentList.Add("-mmt1");
                     }
@@ -333,7 +363,24 @@ public class JustBackup : IDalamudPlugin
                 PluginLog.Error($"Error deleting temp files: {ex.Message}\n{ex.StackTrace ?? ""}");
                 Notify.Error("Error deleting temp files:\n" + ex.Message);
             }
-        }).Start();
+            if(loweredPrio)
+            {
+                try
+                {
+                    var threadHandle = Kernel32.GetCurrentThread().DangerousGetHandle();
+                    if(Interop.SetThreadPriority(threadHandle, Interop.ThreadPriorityClass.THREAD_MODE_BACKGROUND_END))
+                    {
+                        PluginLog.Information($"Restored worker thread priority");
+                    }
+                    else
+                    {
+                        PluginLog.Warning($"Failed to restore worker thread priority: {Kernel32.GetLastError()}");
+                    }
+                }
+                catch(Exception e) { e.Log(); }
+            }
+        });
+        thread.Start();
     }
 
     internal static DirectoryInfo GetPluginsConfigDir()
