@@ -1,5 +1,6 @@
 ﻿using Dalamud.Interface.Components;
 using ECommons.Funding;
+using ECommons.GameHelpers;
 using ECommons.Logging;
 using System.IO;
 
@@ -90,7 +91,7 @@ internal class ConfigWindow : Window
                 Safe(() =>
                 {
                     var fname = Path.Combine(p.GetFFXIVConfigFolder(), $"FFXIV_CHR{Svc.ClientState.LocalContentId:X16}",
-                        $"_{Svc.ClientState.LocalPlayer.Name}@{Svc.ClientState.LocalPlayer.HomeWorld.GameData.Name}.dat");
+                        $"_{Player.NameWithWorld}.dat");
                     File.Create(fname).Dispose();
                     Notify.Success("Added identification info for current character");
                 }, (e) =>
