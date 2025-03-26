@@ -447,7 +447,7 @@ public unsafe class JustBackup : IDalamudPlugin
             using var outputFile = new FileStream(Path.Combine(dest, Path.GetFileName(file)), FileMode.Create);
             var size = inputFile.Length;
             var content = new byte[size];
-            inputFile.Read(content, 0, (int)size);
+            inputFile.ReadExactly(content, 0, (int)size);
             outputFile.Write(content, 0, (int)size);
             if (P.config.CopyThrottle > 0) Thread.Sleep(P.config.CopyThrottle);
             return true;
