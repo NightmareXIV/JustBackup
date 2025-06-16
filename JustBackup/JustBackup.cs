@@ -405,7 +405,7 @@ public unsafe class JustBackup : IDalamudPlugin
         {
             string dirName = Path.GetFileName(directory);
             if (dirName.EqualsIgnoreCaseAny(Exclusions)) continue;
-            if(Utils.IsPathForceExcluded(dirName))
+            if(Utils.IsPathForceExcluded(directory))
             {
                 PluginLog.Verbose($"Path {dirName} is forcibly excluded");
                 continue;

@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using ECommons.Logging;
+using System.IO;
 
 namespace JustBackup;
 
@@ -21,7 +22,9 @@ internal static class Utils
         foreach(var x in ForcedExclusions)
         {
             var excl = Path.Combine(x);
-            if(fullPath.Contains(excl, StringComparison.OrdinalIgnoreCase)) return true;
+            var result = fullPath.Contains(excl, StringComparison.OrdinalIgnoreCase);
+            //PluginLog.Verbose($"Comparing exclusion: \n  excl={excl}\n  fullPath={fullPath}\n  result: {result}");
+            if(result) return true;
         }
         return false;
     }
