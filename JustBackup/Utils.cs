@@ -1,5 +1,7 @@
 ﻿using ECommons.Logging;
 using System.IO;
+using System.Runtime.InteropServices;
+using TerraFX.Interop.Windows;
 
 namespace JustBackup;
 

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using TerraFX.Interop.Windows;
 
 namespace JustBackup;
 internal static partial class Interop
@@ -33,4 +34,12 @@ internal static partial class Interop
         THREAD_MODE_BACKGROUND_BEGIN = 0x00010000,
         THREAD_MODE_BACKGROUND_END = 0x00020000
     }
+
+
+
+    [LibraryImport("kernel32.dll", EntryPoint = "GetCurrentThread")]
+    public static partial HANDLE GetCurrentThread();
+
+    [LibraryImport("kernel32.dll", EntryPoint = "GetLastError")]
+    public static partial uint GetLastError();
 }

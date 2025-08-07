@@ -13,7 +13,6 @@ using ECommons.Funding;
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Common;
 using ECommons.Reflection;
-using PInvoke;
 using Dalamud.Interface.Utility;
 
 namespace JustBackup;
@@ -167,7 +166,7 @@ public unsafe class JustBackup : IDalamudPlugin
             var loweredPrio = false;
             try
             {
-                var threadHandle = Kernel32.GetCurrentThread().DangerousGetHandle();
+                var threadHandle = Interop.GetCurrentThread();
                 if(Interop.SetThreadPriority(threadHandle, Interop.ThreadPriorityClass.THREAD_MODE_BACKGROUND_BEGIN))
                 {
                     PluginLog.Information($"Lowered worker thread priority");
@@ -175,7 +174,7 @@ public unsafe class JustBackup : IDalamudPlugin
                 }
                 else
                 {
-                    PluginLog.Warning($"Failed to lower worker thread priority: {Kernel32.GetLastError()}");
+                    PluginLog.Warning($"Failed to lower worker thread priority: {Interop.GetLastError()}");
                 }
             }
             catch(Exception e) { e.Log(); }
@@ -368,14 +367,14 @@ public unsafe class JustBackup : IDalamudPlugin
             {
                 try
                 {
-                    var threadHandle = Kernel32.GetCurrentThread().DangerousGetHandle();
+                    var threadHandle = Interop.GetCurrentThread();
                     if(Interop.SetThreadPriority(threadHandle, Interop.ThreadPriorityClass.THREAD_MODE_BACKGROUND_END))
                     {
                         PluginLog.Information($"Restored worker thread priority");
                     }
                     else
                     {
-                        PluginLog.Warning($"Failed to restore worker thread priority: {Kernel32.GetLastError()}");
+                        PluginLog.Warning($"Failed to restore worker thread priority: {Interop.GetLastError()}");
                     }
                 }
                 catch(Exception e) { e.Log(); }
