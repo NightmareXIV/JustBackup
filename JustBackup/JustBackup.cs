@@ -323,9 +323,16 @@ public unsafe class JustBackup : IDalamudPlugin
                             if (DateTimeOffset.Now.ToUnixTimeSeconds() > file.time.ToUnixTimeSeconds() + (long)daysToKeep.TotalSeconds)
                             {
                                 PluginLog.Information($"Deleting outdated backup {file.path}.");
-                                Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.path,
-                                    Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
-                                    selectedRecycleOption);
+                                try
+                                {
+                                    Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(file.path,
+                                        Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs,
+                                        selectedRecycleOption);
+                                }
+                                catch(Exception e)
+                                {
+                                    e.Log();
+                                }
                             }
                         }
                     }
